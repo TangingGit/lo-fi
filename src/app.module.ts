@@ -16,6 +16,10 @@ import { Comment } from './repository/entity/comment.entity';
 import { CommentRepository } from './repository/comment.repository';
 import { CardHistoryRepository } from './repository/cardHistory.repository';
 import { CardHistory } from './repository/entity/cardHistory.entity';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Card, Comment, CardHistory]),
@@ -34,9 +38,16 @@ import { CardHistory } from './repository/entity/cardHistory.entity';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '1h' },
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 10000,
+      limit: 5,
+    }]),
   ],
   controllers: [CardController, AuthController, CommentController],
-  providers: [CardService, AuthService, UserRepository, CardRepository, CommentService, CommentRepository, CardHistoryRepository],
+  providers: [CardService, AuthService, UserRepository, CardRepository, CommentService, CommentRepository, CardHistoryRepository, {
+    provide: APP_GUARD,
+    useClass: ThrottlerGuard,
+  },],
 })
 export class AppModule {
 }
